@@ -1,23 +1,23 @@
-# 1. IMAGEN DE CONSTRUCCIÓN
+# 1. IMAGEN DE CONSTRUCCIÓN (Cocinamos la app)
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# ¡OJO! Cambia 'FunerariaWeb.csproj' por el nombre REAL de tu archivo .csproj de la web
 COPY ["FunerariaWeb.csproj", "./"]
 RUN dotnet restore "FunerariaWeb.csproj"
 
-# Copia todo lo demás
 COPY . .
-
-# Construye la Web
-# Cambia 'FunerariaWeb.csproj' por tu nombre real
 RUN dotnet publish "FunerariaWeb.csproj" -c Release -o /app/publish
 
-# 2. IMAGEN DE EJECUCIÓN
-FROM mcr.microsoft.com/dotnet/aspnet:10.0
-WORKDIR /app
-EXPOSE 8080
-COPY --from=build /app/publish .
+# 2. IMAGEN DE EJECUCIÓN CON NGINX (Servimos los platos)
+# Usamos Nginx en lugar de .NET para correr la web
+FROM nginx:alpine
+WORKDIR /usr/share/nginx/html
 
-# Cambia 'FunerariaWeb.dll' por el nombre real de tu DLL (suele ser el mismo del proyecto)
-ENTRYPOINT ["dotnet", "FunerariaWeb.dll"]
+# Copiamos SOLO la carpeta wwwroot (que es lo que ve el navegador)
+COPY --from=build /app/publish/wwwroot .
+
+# Creamos una configuración automática para que funcionen las rutas (como /clientes)
+# Esto evita el error 404 al recargar la página
+RUN echo 'server { listen 80; server_name localhost; location / { root /usr/share/nginx/html; index index.html; try_files $uri $uri/ /index.html; } }' > /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
