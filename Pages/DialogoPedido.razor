@@ -1,4 +1,4 @@
-﻿@using MudBlazor
+@using MudBlazor
 @using FunerariaWeb.Models
 @inject HttpClient Http
 @inject ISnackbar Snackbar
@@ -9,7 +9,6 @@
             <MudItem xs="12" md="6">
                 <MudText Typo="Typo.h6" Class="mb-2">Tu Carrito 🛒</MudText>
                 <MudPaper Class="pa-2" Elevation="0" Outlined="true" Style="max-height: 300px; overflow-y: auto;">
-
                     @if (ProductosSeleccionados.Count == 0)
                     {
                         <MudText Typo="Typo.body2" Class="pa-4 text-center">El carrito está vacío.</MudText>
@@ -25,9 +24,7 @@
                                             <MudText Typo="Typo.body2">@item.Nombre</MudText>
                                             <MudText Typo="Typo.caption">RD$ @item.Precio.ToString("N2")</MudText>
                                         </div>
-                                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                                       Color="Color.Error"
-                                                       Size="Size.Small"
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
                                                        OnClick="@(() => EliminarProducto(item))" />
                                     </div>
                                 </MudListItem>
@@ -36,7 +33,6 @@
                         </MudList>
                     }
                 </MudPaper>
-
                 <div class="d-flex justify-space-between mt-3 pa-2" style="background-color:#f1f5f9; border-radius:4px;">
                     <MudText Typo="Typo.subtitle1"><b>Total:</b></MudText>
                     <MudText Typo="Typo.h6" Color="Color.Primary"><b>RD$ @ProductosSeleccionados.Sum(p => p.Precio).ToString("N2")</b></MudText>
@@ -45,32 +41,19 @@
 
             <MudItem xs="12" md="6">
                 <MudText Typo="Typo.h6" Class="mb-2">Datos del Servicio 📝</MudText>
-
                 <EditForm Model="@pedidoDto" OnValidSubmit="EnviarPedido">
                     <DataAnnotationsValidator />
-
                     <MudTextField @bind-Value="pedidoDto.NombreDifunto" Label="Nombre del Difunto"
                                   Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3" Required="true" />
-
                     <MudDatePicker @bind-Date="fechaNullable" Label="Fecha del Servicio"
                                    Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3" />
-
                     <MudTextField @bind-Value="pedidoDto.Notas" Label="Notas Adicionales"
                                   Variant="Variant.Outlined" Lines="3" Margin="Margin.Dense" />
-
                     <div class="d-flex justify-end mt-6">
                         <MudButton OnClick="Cancel" Color="Color.Default" Class="mr-2">Cancelar</MudButton>
                         <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Secondary"
                                    Disabled="@(procesando || ProductosSeleccionados.Count == 0)" StartIcon="@Icons.Material.Filled.Check">
-                            @if (procesando)
-                            {
-                                <MudText>Enviando...</MudText>
-                            }
-                            else
-                            {
-
-                                <MudText>Confirmar</MudText>
-                            }
+                            @(procesando ? "Enviando..." : "Confirmar")
                         </MudButton>
                     </div>
                 </EditForm>
@@ -81,11 +64,9 @@
 
 @code {
     [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
-
-    // Recibimos la lista por referencia, así que los cambios aquí afectan la vista
     [Parameter] public List<ProductoCliente> ProductosSeleccionados { get; set; } = new();
 
-    private CrearPedidoDto pedidoDto = new CrearPedidoDto();
+    private CrearPedidoDto pedidoDto = new();
     private DateTime? fechaNullable = DateTime.Now.AddDays(1);
     private bool procesando = false;
 
@@ -94,28 +75,18 @@
     private void EliminarProducto(ProductoCliente item)
     {
         ProductosSeleccionados.Remove(item);
-        StateHasChanged(); // Actualizar la vista para recalcular total
+        StateHasChanged();
     }
 
     private async Task EnviarPedido()
     {
-        if (ProductosSeleccionados.Count == 0)
-        {
-            Snackbar.Add("El carrito está vacío.", Severity.Warning);
-            return;
-        }
-
         procesando = true;
-
         pedidoDto.FechaServicio = fechaNullable ?? DateTime.Now;
-        pedidoDto.Items = ProductosSeleccionados.Select(p => new DetallePedidoDto
-        {
-            ProductoId = p.Id,
-            Cantidad = 1
-        }).ToList();
+        pedidoDto.Items = ProductosSeleccionados.Select(p => new DetallePedidoDto { ProductoId = p.Id, Cantidad = 1 }).ToList();
 
         try
         {
+            // CORRECCIÓN: Usando ruta relativa de Program.cs
             var response = await Http.PostAsJsonAsync("api/Pedidos", pedidoDto);
 
             if (response.IsSuccessStatusCode)
@@ -132,9 +103,6 @@
         {
             Snackbar.Add("Error de conexión: " + ex.Message, Severity.Error);
         }
-        finally
-        {
-            procesando = false;
-        }
+        finally { procesando = false; }
     }
 }
