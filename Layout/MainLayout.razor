@@ -1,0 +1,81 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager NavManager
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthStateProvider
+@using Microsoft.AspNetCore.Components.Authorization
+
+<MudThemeProvider Theme="miTemaPersonalizado" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudPopoverProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary" Dense="false">
+        <MudIconButton Icon="@Icons.Material.Filled.LocalFlorist" Color="Color.Secondary" Edge="Edge.Start" OnClick='() => NavManager.NavigateTo("/")' />
+        <MudText Typo="Typo.h6" Class="ml-3" Style="font-family: serif; font-weight: bold; cursor:pointer;" @onclick='() => NavManager.NavigateTo("/")'>
+            Funeraria Web
+        </MudText>
+
+        <MudSpacer />
+
+        <AuthorizeView>
+            <Authorized>
+                <MudText Class="mr-4" Typo="Typo.body2" Style="color: #cbd5e1;">
+                    Hola, @context.User.Identity?.Name
+                </MudText>
+
+                @if (context.User.IsInRole("admin"))
+                {
+                    <MudButton Variant="Variant.Text" Color="Color.Inherit" OnClick='() => NavManager.NavigateTo("/admin")'>PANEL ADMIN</MudButton>
+                }
+                else
+                {
+                    <MudButton Variant="Variant.Text" Color="Color.Inherit" OnClick='() => NavManager.NavigateTo("/mis-pedidos")'>RASTREAR PEDIDOS</MudButton>
+                    <MudButton Variant="Variant.Text" Color="Color.Inherit" OnClick='() => NavManager.NavigateTo("/cliente")'>NUEVO SERVICIO</MudButton>
+                }
+
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-4" OnClick="CerrarSesion">
+                    SALIR
+                </MudButton>
+            </Authorized>
+            <NotAuthorized>
+                <MudButton Variant="Variant.Text" Color="Color.Inherit" OnClick='() => NavManager.NavigateTo("/login")'>Iniciar Sesión</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="ml-2" OnClick='() => NavManager.NavigateTo("/registro")'>Registrarse</MudButton>
+            </NotAuthorized>
+        </AuthorizeView>
+    </MudAppBar>
+
+    <MudMainContent Class="pa-0" Style="min-height: 100vh; padding-top: 64px;">
+        @Body
+    </MudMainContent>
+
+    <div style="position: fixed; bottom: 20px; left: 20px; z-index: 1000;">
+        <MudTooltip Text="¿Necesitas asistencia? ¡Escríbenos!">
+            <MudFab Color="Color.Success"
+                    StartIcon="@Icons.Custom.Brands.WhatsApp"
+                    Size="Size.Large"
+                    Title="Chat de Soporte"
+                    Href="https://wa.me/18092104766?text=Hola,%20estoy%20en%20la%20web%20y%20necesito%20información%20sobre%20un%20servicio."
+                    Target="_blank" />
+        </MudTooltip>
+    </div>
+</MudLayout>
+
+@code {
+    MudTheme miTemaPersonalizado = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#1e293b", // Azul Oscuro Elegante
+            Secondary = "#c59d5f", // Dorado Funeraria
+            AppbarBackground = "#1e293b",
+            Background = "#f8fafc"
+        }
+    };
+
+    private async Task CerrarSesion()
+    {
+        await LocalStorage.RemoveItemAsync("authToken");
+        NavManager.NavigateTo("/login", forceLoad: true);
+    }
+}

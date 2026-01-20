@@ -1,0 +1,163 @@
+﻿@page "/cliente"
+@using Microsoft.AspNetCore.Authorization
+@using System.Net.Http.Json
+@using MudBlazor
+@using FunerariaWeb.Models
+
+@attribute [Authorize]
+@inject HttpClient Http
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="pt-16 mt-10 pb-16">
+
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Style="font-family: serif; color: #1e293b;">Nuestros Servicios</MudText>
+            <MudText Typo="Typo.subtitle1" Class="mud-text-secondary">Selecciona los servicios para tu plan</MudText>
+        </div>
+
+        @if (carrito.Count > 0)
+        {
+            <MudChip T="string" Color="Color.Secondary" Icon="@Icons.Material.Filled.ShoppingCart">
+                @carrito.Count items seleccionados
+            </MudChip>
+        }
+    </div>
+
+    <MudPaper Elevation="0" Class="mb-6 pa-2 d-flex align-center gap-4 border rounded-lg" Outlined="true">
+        <MudIcon Icon="@Icons.Material.Filled.Search" Color="Color.Default" Class="ml-2" />
+        <MudTextField @bind-Value="busqueda" Placeholder="Buscar servicio (ej: Cremación, Ataúd)..."
+                      Immediate="true" Variant="Variant.Text" Margin="Margin.Dense" FullWidth="true" />
+    </MudPaper>
+
+    @if (cargando)
+    {
+        <div class="d-flex justify-center my-8">
+            <MudProgressCircular Color="Color.Secondary" Indeterminate="true" Size="Size.Large" />
+        </div>
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var prod in productos?.Where(p => string.IsNullOrEmpty(busqueda) ||
+                    p.Nombre.Contains(busqueda, StringComparison.OrdinalIgnoreCase)) ?? new ProductoCliente[0])
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Elevation="3" Class="h-100 d-flex flex-column hover-effect">
+
+                        <div style="cursor:pointer" @onclick="@(() => VerDetalles(prod))">
+                            <MudCardMedia Image="@(string.IsNullOrWhiteSpace(prod.ImagenUrl) ?
+                                                                "https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg" :
+                                                                prod.ImagenUrl)"
+                                  Height="200" />
+                        </div>
+
+                        <MudCardContent Class="flex-grow-1">
+                            <MudText Typo="Typo.h6">@prod.Nombre</MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2 text-muted" Style="height: 40px; overflow: hidden; text-overflow: ellipsis;">
+                                @prod.Descripcion
+                            </MudText>
+                            <MudText Typo="Typo.h5" Color="Color.Secondary" Style="font-weight: bold;">RD$ @prod.Precio.ToString("N2")</MudText>
+                        </MudCardContent>
+
+                        <MudCardActions Class="pa-4">
+                            <MudTooltip Text="Ver Detalles">
+                                <MudIconButton Icon="@Icons.Material.Outlined.Info" Color="Color.Info" OnClick="@(() => VerDetalles(prod))" />
+                            </MudTooltip>
+
+                            <MudSpacer />
+
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AddShoppingCart"
+                                       OnClick="@(() => AgregarAlCarrito(prod))">
+                                Añadir
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+
+        @if (productos != null && !productos.Any(p => string.IsNullOrEmpty(busqueda) || p.Nombre.Contains(busqueda, StringComparison.OrdinalIgnoreCase)))
+        {
+            <MudAlert Severity="Severity.Info" Class="mt-4">No se encontraron servicios que coincidan con tu búsqueda.</MudAlert>
+        }
+    }
+
+    @if (carrito.Count > 0)
+    {
+        <div style="position: fixed; bottom: 30px; right: 30px; z-index: 1000;">
+            <MudTooltip Text="Finalizar Solicitud">
+                <MudFab Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Check" Label="Confirmar Pedido" OnClick="AbrirConfirmacion" />
+            </MudTooltip>
+        </div>
+    }
+</MudContainer>
+
+@code {
+    private ProductoCliente[]? productos;
+    private List<ProductoCliente> carrito = new List<ProductoCliente>();
+    private bool cargando = true;
+    private string busqueda = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Usamos la URL relativa que definimos en Program.cs
+            productos = await Http.GetFromJsonAsync<ProductoCliente[]>("api/Catalogo");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error cargando productos: " + ex.Message, Severity.Error);
+        }
+        finally { cargando = false; }
+    }
+
+    private void AgregarAlCarrito(ProductoCliente prod)
+    {
+        carrito.Add(prod);
+        Snackbar.Add($"{prod.Nombre} agregado al plan", Severity.Success);
+    }
+
+    private async Task VerDetalles(ProductoCliente prod)
+    {
+        var parameters = new DialogParameters { ["Producto"] = prod };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+
+        // Asegúrate de haber creado el archivo DialogoDetalleProducto.razor
+        var dialog = DialogService.Show<DialogoDetalleProducto>("Detalles del Servicio", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            // Si el diálogo retorna true (clic en "Agregar"), lo sumamos
+            if (result.Data is bool agregado && agregado)
+            {
+                AgregarAlCarrito(prod);
+            }
+        }
+    }
+    private async Task AbrirConfirmacion()
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("ProductosSeleccionados", carrito);
+
+        // Aumentamos un poco el ancho para que quepan las dos columnas
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = DialogService.Show<DialogoPedido>("Confirmar Solicitud", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            // Si confirmó el pedido, vaciamos el carrito
+            carrito.Clear();
+        }
+
+        // IMPORTANTE: Llamamos a StateHasChanged aquí afuera
+        // Esto sirve por si el usuario borró un ítem dentro del diálogo y luego dio a "Cancelar".
+        // Así el contador del carrito (Chip) se actualiza correctamente.
+        StateHasChanged();
+    }
+}

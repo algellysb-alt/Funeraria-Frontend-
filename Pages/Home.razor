@@ -1,0 +1,43 @@
+﻿@page "/"
+@inject NavigationManager NavManager
+@using MudBlazor
+
+<PageTitle>Funeraria Web - Inicio</PageTitle>
+
+<MudCarousel Class="mud-width-full" Style="height:500px;" ShowArrows="true" ShowBullets="true" AutoCycle="true" TData="object">
+    <MudCarouselItem Transition="Transition.Fade" Color="@Color.Primary">
+        <div class="d-flex flex-column align-center justify-center" style="height:100%; background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1518247986259-c290c028c232?q=80&w=1920'); background-size: cover;">
+            <MudText Typo="Typo.h2" Style="font-family: serif; color: white; text-shadow: 2px 2px 4px black;">Dignidad y Respeto</MudText>
+            <MudText Typo="Typo.h5" Class="mt-2" Style="color: #e2e8f0;">Honrando la memoria de sus seres queridos.</MudText>
+        </div>
+    </MudCarouselItem>
+    <MudCarouselItem Transition="Transition.Fade" Color="@Color.Secondary">
+        <div class="d-flex flex-column align-center justify-center" style="height:100%; background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1507643179173-3983dff28125?q=80&w=1920'); background-size: cover;">
+            <MudText Typo="Typo.h2" Style="font-family: serif; color: white; text-shadow: 2px 2px 4px black;">Acompañamiento Total</MudText>
+            <MudText Typo="Typo.h5" Class="mt-2" Style="color: #e2e8f0;">Estamos con usted en cada paso del camino.</MudText>
+        </div>
+    </MudCarouselItem>
+</MudCarousel>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="my-16 text-center">
+    <MudText Typo="Typo.h4" Style="font-family: serif; color: #1e293b;" GutterBottom="true">Nuestros Compromisos</MudText>
+    <div style="width: 60px; height: 3px; background-color: #c59d5f; margin: 0 auto 30px auto;"></div>
+
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudIcon Icon="@Icons.Material.Filled.Home" Style="font-size: 3rem; color: #c59d5f;" />
+            <MudText Typo="Typo.h6" Class="mt-2">Instalaciones Premium</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Default">Capillas diseñadas para la paz y la privacidad familiar.</MudText>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudIcon Icon="@Icons.Material.Filled.DirectionsCar" Style="font-size: 3rem; color: #c59d5f;" />
+            <MudText Typo="Typo.h6" Class="mt-2">Flota de Lujo</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Default">Vehículos modernos para traslados dignos y solemnes.</MudText>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudIcon Icon="@Icons.Material.Filled.SupportAgent" Style="font-size: 3rem; color: #c59d5f;" />
+            <MudText Typo="Typo.h6" Class="mt-2">Atención 24 Horas</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Default">Personal capacitado disponible en todo momento.</MudText>
+        </MudItem>
+    </MudGrid>
+</MudContainer>

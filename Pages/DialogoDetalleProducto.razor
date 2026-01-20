@@ -1,0 +1,56 @@
+﻿@using FunerariaWeb.Models
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid Class="d-flex align-center">
+            <MudItem xs="12" sm="6">
+                <MudImage Src="@(string.IsNullOrEmpty(Producto.ImagenUrl) ? "https://via.placeholder.com/300x300?text=Sin+Imagen" : Producto.ImagenUrl)"
+                          ObjectFit="ObjectFit.Cover"
+                          Height="300"
+                          Fluid="true"
+                          Elevation="2"
+                          Class="rounded-lg" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6" Class="d-flex flex-column justify-center pa-4">
+                <MudText Typo="Typo.h5" Style="font-weight:bold; line-height: 1.2;">@Producto.Nombre</MudText>
+                <MudText Typo="Typo.h4" Color="Color.Secondary" Class="mt-2" Style="font-weight: bold;">RD$ @Producto.Precio.ToString("N2")</MudText>
+
+                <MudDivider Class="my-4" />
+
+                <MudText Typo="Typo.body1" Style="color: #475569;">
+                    @Producto.Descripcion
+                </MudText>
+
+                <MudText Typo="Typo.caption" Class="mt-4 mud-text-secondary">
+                    <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-1" style="vertical-align:middle" />
+                    * Incluye impuestos y servicios de traslado básico.
+                </MudText>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel" Color="Color.Default">Cerrar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.AddShoppingCart" OnClick="Agregar">
+            Agregar al Plan
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    // [CascadingParameter] permite cerrar el diálogo
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
+
+    // Recibimos el producto desde Cliente.razor
+    [Parameter] public ProductoCliente Producto { get; set; } = new();
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Agregar()
+    {
+        // Retornamos TRUE para que Cliente.razor sepa que debe agregarlo al carrito
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

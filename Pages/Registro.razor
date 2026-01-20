@@ -1,0 +1,128 @@
+﻿@page "/registro"
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@using System.Net.Http.Json
+@using MudBlazor
+
+<div class="d-flex justify-center align-center py-10" style="min-height: 100vh; background-color: #f8fafc;">
+    <MudPaper Elevation="1" Class="pa-8 d-flex flex-column align-center" Width="500px">
+
+        <MudIcon Icon="@Icons.Material.Outlined.LocalFlorist" Style="font-size: 2rem; color: #c59d5f;" />
+        <MudText Typo="Typo.h5" Class="mt-2 mb-1" Style="font-family: serif; color: #1e293b;">Funeraria Web</MudText>
+        <MudText Typo="Typo.body2" Class="mb-6" Style="color: #64748b;">Crea tu cuenta para acceder a nuestros servicios</MudText>
+
+        <MudText Typo="Typo.h5" Class="mb-6" Style="font-family: serif; color: #1e293b;">Crear Cuenta</MudText>
+
+        <MudText Typo="Typo.caption" Class="mb-1" Style="align-self: start; font-weight: bold; color: #475569;">Nombre Completo</MudText>
+        <MudTextField @bind-Value="nombre" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3" FullWidth="true" Placeholder="Juan Pérez García" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Person" />
+
+        <MudText Typo="Typo.caption" Class="mb-1" Style="align-self: start; font-weight: bold; color: #475569;">Correo Electrónico</MudText>
+        <MudTextField @bind-Value="email" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3" FullWidth="true" Placeholder="correo@ejemplo.com" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Email" />
+
+        <MudText Typo="Typo.caption" Class="mb-1" Style="align-self: start; font-weight: bold; color: #475569;">Contraseña</MudText>
+        <MudTextField @bind-Value="password" Variant="Variant.Outlined" InputType="InputType.Password" Margin="Margin.Dense" Class="mb-3" FullWidth="true" Placeholder="••••••••" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Lock" />
+
+        <MudText Typo="Typo.caption" Class="mb-1" Style="align-self: start; font-weight: bold; color: #475569;">Teléfono</MudText>
+        <MudTextField @bind-Value="telefono" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3" FullWidth="true" Placeholder="+1 809 000 0000" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Phone" />
+
+        <MudText Typo="Typo.caption" Class="mb-1" Style="align-self: start; font-weight: bold; color: #475569;">Dirección</MudText>
+        <MudTextField @bind-Value="direccion" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-6" FullWidth="true" Placeholder="Calle, Número, Sector" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Home" />
+
+        <MudButton Variant="Variant.Filled" FullWidth="true" Size="Size.Large"
+                   Style="background-color: #0f172a; color: white; text-transform: none;"
+                   OnClick="ProcesarRegistro" Disabled="@cargando">
+            @if (cargando)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ms-2">Creando cuenta...</MudText>
+            }
+            else
+            {
+                <MudText>Crear Cuenta</MudText>
+            }
+        </MudButton>
+
+        <MudText Typo="Typo.body2" Class="mt-4" Align="Align.Center">
+            ¿Ya tienes cuenta? <MudLink Href="/login" Style="color: #c59d5f; font-weight: bold; text-decoration: none;">Inicia sesión</MudLink>
+        </MudText>
+
+        @if (exito)
+        {
+            <MudAlert Severity="Severity.Success" Class="mt-3">¡Cuenta creada! Redirigiendo...</MudAlert>
+        }
+        @if (!string.IsNullOrEmpty(mensajeError))
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-3">@mensajeError</MudAlert>
+        }
+    </MudPaper>
+</div>
+
+@code {
+    string nombre = "";
+    string email = "";
+    string password = "";
+    string telefono = "";
+    string direccion = "";
+
+    bool exito = false;
+    bool cargando = false;
+    string mensajeError = "";
+
+    private async Task ProcesarRegistro()
+    {
+        cargando = true;
+        mensajeError = "";
+        exito = false;
+
+        // Validación básica
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(nombre))
+        {
+            mensajeError = "Por favor completa los campos obligatorios.";
+            cargando = false;
+            return;
+        }
+
+        var nuevoUsuario = new
+        {
+            NombreCompleto = nombre,
+            Email = email,
+
+            // --- CORRECCIÓN CRÍTICA ---
+            // En el backend la propiedad se llama "Password", no "PasswordHash".
+            // Si mandas PasswordHash, el backend recibirá null.
+            Password = password,
+
+            Telefono = telefono,
+            Direccion = direccion,
+            Rol = "cliente"
+        };
+
+        try
+        {
+            // Usamos ruta relativa (api/Auth/registro) asumiendo que BaseAddress está configurado en Program.cs
+            var response = await Http.PostAsJsonAsync("api/Auth/registro", nuevoUsuario);
+
+            if (response.IsSuccessStatusCode)
+            {
+                exito = true;
+                StateHasChanged(); // Forzar actualización de UI para ver el mensaje verde
+                await Task.Delay(2000);
+                NavManager.NavigateTo("/login");
+            }
+            else
+            {
+                // Leemos qué error nos devolvió la API (ej: "El correo ya existe")
+                var errorContent = await response.Content.ReadAsStringAsync();
+                mensajeError = string.IsNullOrEmpty(errorContent) ? "Error al registrar usuario." : errorContent;
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = "Error de conexión: " + ex.Message;
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+}
