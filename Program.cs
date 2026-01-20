@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using FunerariaWeb; // Asegúrate que este sea el nombre de tu proyecto
+using FunerariaWeb; // AsegÃºrate que este sea el nombre de tu proyecto
 using MudBlazor.Services; // <--- NECESARIO PARA MUDBLAZOR
 using Blazored.LocalStorage; // <--- NECESARIO PARA EL TOKEN
 using Microsoft.AspNetCore.Components.Authorization; // <--- NECESARIO PARA SEGURIDAD
@@ -10,11 +10,12 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-// 1. CONFIGURACIÓN DE LA API (HTTP)
-// Asegúrate de que este puerto (7051) sea el mismo que usa tu API al correr
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7051") });
+// 1. CONFIGURACIÃ“N DE LA API (HTTP)
+// AsegÃºrate de que este puerto (7051) sea el mismo que usa tu API al correr
+// CÃ“DIGO CORREGIDO (Apunta a la Nube)
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://funeraria-backend-s14c.onrender.com") });
 
-// 2. SERVICIOS DE MUDBLAZOR (¡Si falta esto, la web se queda cargando!)
+// 2. SERVICIOS DE MUDBLAZOR (Â¡Si falta esto, la web se queda cargando!)
 builder.Services.AddMudServices();
 
 // 3. MEMORIA LOCAL (LocalStorage)
@@ -23,5 +24,6 @@ builder.Services.AddBlazoredLocalStorage();
 // 4. SISTEMA DE SEGURIDAD (AUTH)
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthProvider>();
+
 
 await builder.Build().RunAsync();
